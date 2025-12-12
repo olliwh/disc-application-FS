@@ -65,11 +65,11 @@ jobs:
               env:
                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
               run: |
-                  dotnet sonarscanner begin /k:"olliorganisation_disp-app-backend" /o:"olliorganisation" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+                  dotnet sonarscanner begin /k:"olliorganisation_disp-app-backend" /o:"olliorganisation" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/TestResults/coverage.opencover.xml"
 
             - name: Build API
               working-directory: backend-disc
-              run: dotnet build --no-restore --configuration Release
+              run: dotnet build --configuration Release
 
             - name: Start API
               env:
@@ -104,13 +104,18 @@ jobs:
               working-directory: backend-disc
               run: |
                   dotnet test \
-                    --no-build \
                     --configuration Release \
                     --logger "trx;LogFileName=test-results.trx" \
                     --verbosity normal \
                     /p:CollectCoverage=true \
                     /p:CoverletOutputFormat=opencover \
                     /p:CoverletOutput=./TestResults/coverage.opencover.xml
+
+            - name: List coverage files
+              working-directory: backend-disc
+              run: |
+                  echo "Searching for coverage files:"
+                  find . -name "coverage.opencover.xml" -o -name "*.opencover.xml" || echo "No coverage files found"
 
             - name: End SonarQube Analysis
               working-directory: backend-disc
