@@ -39,19 +39,7 @@ export const NavBar = () => {
     <HStack justifyContent="space-between" paddingRight={25}>
       <Image padding={2} src={logo} boxSize="60px" onClick={handleToHomePage} />
       <SearchInput />
-      {!isAuthenticated ? (
-        <>
-          <Button
-            id="loginBtnNavbar"
-            colorScheme="teal"
-            variant="outline"
-            onClick={onLoginOpen}
-          >
-            Login
-          </Button>
-          <LoginModal isOpen={isLoginOpen} onClose={onLoginClose} />
-        </>
-      ) : (
+      {isAuthenticated ? (
         <HStack spacing={4}>
           <CiUser
             size={24}
@@ -63,6 +51,18 @@ export const NavBar = () => {
             Logout
           </Button>
         </HStack>
+      ) : (
+        <>
+          <Button
+            id="loginBtnNavbar"
+            colorScheme="teal"
+            variant="outline"
+            onClick={onLoginOpen}
+          >
+            Login
+          </Button>
+          <LoginModal isOpen={isLoginOpen} onClose={onLoginClose} />
+        </>
       )}
       <ColorModeSwitch />
     </HStack>

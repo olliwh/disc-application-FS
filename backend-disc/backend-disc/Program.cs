@@ -1,4 +1,4 @@
-using backend_disc.Dtos.Departments;
+﻿using backend_disc.Dtos.Departments;
 using backend_disc.Dtos.DiscProfiles;
 using backend_disc.Dtos.Positions;
 using backend_disc.Models;
@@ -15,12 +15,6 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Create a logger early (before app.Build)
-var startupLogger = LoggerFactory.Create(config =>
-{
-    config.AddConsole();
-}).CreateLogger("Startup");
-
 
 // Add logging configuration
 builder.Services.AddLogging(config =>
@@ -30,7 +24,6 @@ builder.Services.AddLogging(config =>
     config.SetMinimumLevel(LogLevel.Debug);
 });
 
-// Add services to the container.
 
 //Cors
 builder.Services.AddCors(options =>
@@ -143,9 +136,8 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
-
-
 
 app.MapControllers();
 

@@ -39,7 +39,7 @@ const EmployeeProfile = () => {
     if (!id) return;
 
     updateMutation.mutate(
-      { id: parseInt(id), data: { privateEmail, privatePhone } },
+      { id: Number.parseInt(id), data: { privateEmail, privatePhone } },
       {
         onSuccess: () => {
           setIsEditMode(false);
@@ -137,7 +137,7 @@ const EmployeeProfile = () => {
                 Private Email:
               </Text>
               <Input
-              id="email-input"
+                id="email-input"
                 value={privateEmail}
                 onChange={(e) => setPrivateEmail(e.target.value)}
               />
@@ -147,7 +147,7 @@ const EmployeeProfile = () => {
                 Private Phone:
               </Text>
               <Input
-              id="phone-input"
+                id="phone-input"
                 value={privatePhone}
                 onChange={(e) => setPrivatePhone(e.target.value)}
               />

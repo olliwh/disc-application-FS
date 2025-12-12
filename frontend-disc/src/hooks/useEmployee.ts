@@ -5,11 +5,11 @@ import employeeService from "../services/employeeService";
 const useEmployee = (id: string) => {
   return useQuery({
     queryKey: ["employee", id],
-    queryFn: () => employeeService.getById(parseInt(id)),
+    queryFn: () => employeeService.getById(Number.parseInt(id)),
     enabled: !!id,
     retry: false,
     throwOnError: true,
-    staleTime: 0, 
+    staleTime: 0,
   });
 };
 

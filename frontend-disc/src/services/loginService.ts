@@ -54,7 +54,7 @@ const loginService = {
     try {
       const [, payloadBase64] = token.split(".");
       const payload = JSON.parse(atob(payloadBase64));
-      return payload.employeeId ? parseInt(payload.employeeId, 10) : null;
+      return payload.employeeId ? Number.parseInt(payload.employeeId, 10) : null;
     } catch {
       return null;
     }

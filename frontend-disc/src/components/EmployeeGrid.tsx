@@ -11,7 +11,7 @@ import EmployeeCardContainer from "./reusableComponents/EmployeeCardContainer";
 const EmployeeGrid = () => {
   const { data, error, isLoading, fetchNextPage, hasNextPage } = useEmployees();
 
-  const skeletons = [...Array(12).keys()];
+  const skeletons = [...new Array(12).keys()];
   const fetchedEmployeesCount =
     data?.pages.reduce((total, page) => total + page.items.length, 0) || 0;
   return (

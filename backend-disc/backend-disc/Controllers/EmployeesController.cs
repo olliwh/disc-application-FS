@@ -21,19 +21,7 @@ namespace backend_disc.Controllers
             _logger = logger;
         }
 
-        //[HttpGet]
-        //[ProducesResponseType(StatusCodes.Status200OK)]
-        //public async Task<IActionResult> GetAll(
-        //    [FromQuery] int? departmentId = null,
-        //    [FromQuery] int? discProfileId = null,
-        //    [FromQuery] int? positionId = null,
-        //    [FromQuery] string? search = null,
-        //    [FromQuery] int pageIndex = 1,
-        //    [FromQuery] int pageSize = 12)
-        //{
-        //    var employees = await _employeeService.GetAll(departmentId, discProfileId, positionId, search, pageIndex, pageSize);
-        //    return Ok(employees);
-        //}
+
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll(
@@ -56,7 +44,7 @@ namespace backend_disc.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [Authorize]
-        public virtual async Task<IActionResult> GetById(int id, [FromQuery] string db = "mssql")
+        public virtual async Task<IActionResult> GetById(int id)
         {
             // Get employeeId from token
             var employeeIdFromToken = User.FindFirst("employeeId")?.Value;
@@ -91,7 +79,7 @@ namespace backend_disc.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]//in valid token
         //NullReferenceException if fk doesnt exist
         //[Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateEmployee([FromBody] CreateNewEmployee dto, [FromQuery] string db = "mssql")
+        public async Task<IActionResult> CreateEmployee([FromBody] CreateNewEmployee dto)
         {
             try
             {
@@ -128,7 +116,7 @@ namespace backend_disc.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public virtual async Task<IActionResult> Delete(int id, [FromQuery] string db = "mssql")
+        public virtual async Task<IActionResult> Delete(int id)
         {
             var deleted = await _employeeService.DeleteAsync(id);
             if (deleted == null) return NotFound();
@@ -142,7 +130,7 @@ namespace backend_disc.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [Authorize]
-        public virtual async Task<IActionResult> Update(int id, [FromBody] UpdatePrivateDataDto updateDto, [FromQuery] string db = "mssql")
+        public virtual async Task<IActionResult> Update(int id, [FromBody] UpdatePrivateDataDto updateDto)
         {
             // Get employeeId from token
             var employeeIdFromToken = User.FindFirst("employeeId")?.Value;

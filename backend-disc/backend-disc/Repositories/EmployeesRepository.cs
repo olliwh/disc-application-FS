@@ -162,9 +162,7 @@ namespace backend_disc.Repositories
             if (!string.IsNullOrWhiteSpace(search))
             {
                 string normalizedSearch = search.Trim().ToLower();
-                employees = employees
-                    .Where(e => (e.FirstName + " " + e.LastName).ToLower().Contains(normalizedSearch))
-                    .ToList();
+                query = query.Where(e => e.FirstName.ToLower().Contains(normalizedSearch) || e.LastName.ToLower().Contains(normalizedSearch) );
             }
 
             return new PaginatedList<Employee>(employees, pageIndex, totalCount, pageSize);
