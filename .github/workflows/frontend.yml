@@ -130,7 +130,10 @@ jobs:
               working-directory: frontend-disc
               run: |
                   echo "Coverage directory contents:"
-                  ls -la coverage/ || echo "No coverage directory found"
+                  ls -laR coverage/ || echo "No coverage directory found"
+                  echo ""
+                  echo "Looking for lcov.info:"
+                  find . -name "lcov.info" || echo "No lcov.info found"
 
             - name: Build frontend
               working-directory: frontend-disc
