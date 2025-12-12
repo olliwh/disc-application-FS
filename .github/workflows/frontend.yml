@@ -122,11 +122,19 @@ jobs:
 
             - name: Run frontend tests
               working-directory: frontend-disc
-              run: npx vitest run
+              run: npx vitest run --coverage
 
             - name: Build frontend
               working-directory: frontend-disc
               run: npm run build
+
+            - name: SonarQube Scan
+              uses: SonarSource/sonarqube-scan-action@v6
+              with:
+                  projectBaseDir: frontend-disc
+              env:
+                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+                  SONAR_HOST_URL: https://sonarcloud.io
 
             - name: Start frontend dev server
               working-directory: frontend-disc
