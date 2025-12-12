@@ -1,0 +1,64 @@
+import axios, { type AxiosRequestConfig } from "axios";
+
+import loginService from "./loginService";
+
+export interface Response<T> {
+  items: T[];
+  totalCount: number;
+  pageIndex: number;
+  pageSize: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+const axiosInstance = axios.create({
+  baseURL: import.meta.env["VITE_API_URL"],
+  withCredentials: true, //cant use allow all must specify localhost:3000
+});
+
+// Add token to requests
+axiosInstance.interceptors.request.use((config) => {
+  const token = loginService.getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+class ApiClient<T> {
+  endpoint: string;
+  constructor(endpoint: string) {
+    this.endpoint = endpoint;
+  }
+  getAll(config?: AxiosRequestConfig) {
+    return axiosInstance
+      .get<Response<T>>(this.endpoint, config)
+      .then((res) => res.data);
+  }
+
+  getById = (id: number) =>
+    axiosInstance.get<T>(`${this.endpoint}/${id}`).then((res) => res.data);
+
+  delete = (id: number) =>
+    axiosInstance.delete(`${this.endpoint}/${id}`).then((res) => res.data);
+
+  create = (data: Partial<T>) =>
+    axiosInstance
+      .post<Response<T>>(this.endpoint, data)
+      .then((res) => res.data);
+
+  update = (id: number, data: Partial<T>) =>
+    axiosInstance
+      .put<Response<T>>(`${this.endpoint}/${id}`, data)
+      .then((res) => res.data);
+
+  post = <R = T>(path: string, data: Record<string, unknown>) =>
+    axiosInstance
+      .post<R>(`${this.endpoint}${path}`, data)
+      .then((res) => res.data);
+
+  getWeather = <R = T>() =>
+    axiosInstance.get<R>(`${this.endpoint}`).then((res) => res.data);
+}
+
+export default ApiClient;
