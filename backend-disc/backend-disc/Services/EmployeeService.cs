@@ -118,7 +118,7 @@ namespace backend_disc.Services
         /// <param name="firstName"></param>
         /// <param name="lastName"></param>
         /// <returns>Dictionary<string, string></returns>
-        internal async Task<Dictionary<string, string>> GenerateUsernameWorkMailAndPhone(string firstName, string lastName)
+        private async Task<Dictionary<string, string>> GenerateUsernameWorkMailAndPhone(string firstName, string lastName)
         {
             var company = await _companiesRepository.GetById(1);
             if (company == null)
@@ -165,7 +165,7 @@ namespace backend_disc.Services
             };
         }
 
-        internal static string GetRandomDigits(int length)
+        private static string GetRandomDigits(int length)
         {
             StringBuilder stringBuilder = new();
             if (length < 1)

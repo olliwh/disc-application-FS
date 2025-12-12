@@ -18,9 +18,7 @@ namespace backend_disc.Services.Tests
         private Mock<IMapper> _mockMapper = null!;
         private EmployeeService _employeeService = null!;
         private Company _company = null!;
-        private readonly string emailDomain = "@TechCorp.com";
-        private const int length = 2;
-        private readonly string db = "mssql";
+        private const int TEST_ITERATIONS = 2;
 
         private const string DEFAULT_IMAGE_PATH = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png";
         private const string PASSWORD_HASH = "$argon2id$v=19$m=65536,t=3,p=1$JcD7uPdQ3ey8lapNPowUmg$ulD90DajUEOpnbsnmY1Q/pkNeoLArY5XXJlpbRi4QcY";
@@ -30,8 +28,8 @@ namespace backend_disc.Services.Tests
         private const string VALID_FIRST_NAME = "John";
         private const string VALID_LAST_NAME = "Doe";
         private const int VALID_POSITION_ID = 1;
-        private const string VALID_USERNAME = "test.user";
-        private const string VALID_WORK_EMAIL = "work@test.com";
+        private const string VALID_USERNAME = "johndo123";
+        private const string VALID_WORK_EMAIL = VALID_USERNAME + "@test.com";
         private const string VALID_WORK_PHONE = "87654321";
         private const string VALID_PRIVATE_EMAIL = "private@test.com";
         private const string VALID_PRIVATE_PHONE = "12345678";
@@ -100,6 +98,85 @@ namespace backend_disc.Services.Tests
             };
         }
 
+        private void SetupCreateEmployeeMocks()
+        {
+            // Setup mapper to map DTO to SP params
+            _mockMapper.Setup(x => x.Map<AddEmployeeSpParams?>(It.IsAny<CreateNewEmployee>())).Returns(_validSpParamsEmployee);
+            
+            // Setup repository to return a created employee
+            var createdEmployee = new Employee
+            {
+                Id = 10,
+                FirstName = VALID_FIRST_NAME,
+                LastName = VALID_LAST_NAME,
+                WorkEmail = VALID_WORK_EMAIL,
+                WorkPhone = VALID_WORK_PHONE,
+                ImagePath = DEFAULT_IMAGE_PATH,
+                DepartmentId = VALID_DEPARTMENT_ID,
+                DiscProfileId = VALID_DISC_PROFILE_ID,
+                PositionId = VALID_POSITION_ID
+            };
+            _mockEmployeeRepository.Setup(x => x.AddEmployeeSPAsync(It.IsAny<AddEmployeeSpParams>())).ReturnsAsync(createdEmployee);
+            
+            // Setup mapper to map Employee to DTO
+            var employeeDto = new EmployeeDto
+            {
+                Id = 10,
+                FirstName = VALID_FIRST_NAME,
+                LastName = VALID_LAST_NAME,
+                WorkEmail = VALID_WORK_EMAIL,
+                WorkPhone = VALID_WORK_PHONE,
+                ImagePath = DEFAULT_IMAGE_PATH
+            };
+            _mockMapper.Setup(x => x.Map<EmployeeDto?>(It.IsAny<Employee>())).Returns(employeeDto);
+        }
+
+        [TestMethod]
+
+        public async Task CreateEmployee_GeneratesWorkEmailAndUsername_WithCorrectFormat()
+        {
+            SetupCreateEmployeeMocks();
+
+            var expectedEmailRegex = new System.Text.RegularExpressions.Regex(@"^[a-z]+[a-z]{2}\d{3}@test\.com$");
+            for (int i = 0; i < TEST_ITERATIONS; i++)
+            {
+                var result = await _employeeService.CreateEmployee(_validDtoEmployee);
+
+                Assert.IsNotNull(result);
+                string workEmail = result.WorkEmail;
+                int at = workEmail.IndexOf('@');
+                string username = at >= 0 ? workEmail.AsSpan(0, at).ToString() : string.Empty;
+                Console.WriteLine(workEmail);
+                Console.WriteLine(username);
+                Assert.IsNotNull(workEmail);
+                Assert.IsTrue(workEmail.Length > 5);
+                Assert.IsTrue(workEmail.Length < 256);
+                Assert.IsNotNull(username);
+                Assert.IsTrue(workEmail.Length > 5);
+                Assert.IsTrue(workEmail.Length < 256);
+                Assert.IsTrue(workEmail.EndsWith("@test.com"));
+                StringAssert.Matches(workEmail, expectedEmailRegex);
+
+            }
+        }
+        [TestMethod]
+
+
+        public async Task CreateEmployee_GeneratesWorkPhone_WithCorrectFormat()
+        {
+            SetupCreateEmployeeMocks();
+
+            for (int i = 0; i < TEST_ITERATIONS; i++)
+            {
+                var result = await _employeeService.CreateEmployee(_validDtoEmployee);
+                Assert.IsNotNull(result);
+                Assert.IsNotNull(result.WorkPhone);
+                string workPhone = result.WorkPhone;
+                Assert.IsNotNull(workPhone);
+                Assert.IsTrue(workPhone.Length > 7); 
+                Assert.IsTrue(workPhone.Length < 26);
+            }
+        }
         [TestMethod()]
         public async Task GetAll_Success()
         {
@@ -108,65 +185,13 @@ namespace backend_disc.Services.Tests
             Assert.IsNotNull(result);
             Assert.AreEqual(3, result.TotalCount);
         }
-        [TestMethod()]
-        [DataRow("Admin", "Admin", "admin", "ad")]
-        public async Task GenerateUsernameWorkMailAndPhone_ValueStructure(string firstName, string lastName, string firstNameLower, string lastNameFirstTwo)
+
+        public async Task CreateEmployeeCompanyNotFound()
         {
-
-            for (int i = 0; i < length; i++)
-            {
-                var result = await _employeeService.GenerateUsernameWorkMailAndPhone(firstName, lastName);
-                string username = result["username"];
-                int digitCountUsername = username.Count(char.IsDigit);
-                string phoneNumber = result["phoneNumber"];
-                int digitCountPhone = phoneNumber.Count(char.IsDigit);
-                string workEmail = result["workEmail"];
-
-                Assert.IsNotNull(result);
-
-                //Username structure
-                Assert.IsNotNull(username);
-                Assert.IsTrue(username.StartsWith(firstNameLower));
-                Assert.IsTrue(username.Contains(lastNameFirstTwo));
-                Assert.AreEqual(3, digitCountUsername);
-                //Phone number structure
-                Assert.IsNotNull(phoneNumber);
-                Assert.AreEqual(8, phoneNumber.Length);
-                Assert.AreEqual(8, digitCountPhone);
-                //Work email structure
-                Assert.IsNotNull(workEmail);
-                Assert.IsTrue(workEmail.StartsWith(username));
-                Assert.IsTrue(workEmail.EndsWith(emailDomain));
-            }
-        }
-
-        [TestMethod()]
-        [DataRow("Bob", "Marley")]
-        [DataRow("Sarah", "Connor")]
-        [DataRow("Michael", "Jordan")]
-        [DataRow("Emma", "Watson")]
-        [DataRow("David", "Beckham")]
-        [DataRow("Lisa", "Simpson")]
-        [DataRow("James", "Bond")]
-        [DataRow("Maria", "Garcia")]
-        [DataRow("Thomas", "Anderson")]
-        [DataRow("Anna", "Williams")]
-        public async Task GenerateUsernameWorkMailAndPhone_DictionaryStructure(string firstName, string lastName)
-        {
-
-            var result = await _employeeService.GenerateUsernameWorkMailAndPhone(firstName, lastName);
-            string username = result["username"];
-            string phoneNumber = result["phoneNumber"];
-            string workEmail = result["workEmail"];
-
-            Assert.IsNotNull(result);
-            //Dictionary structure
-            Assert.IsTrue(result.ContainsKey("username"));
-            Assert.IsTrue(result.ContainsKey("workEmail"));
-            Assert.IsTrue(result.ContainsKey("phoneNumber"));
-            Assert.IsNotNull(username);
-            Assert.IsNotNull(phoneNumber);
-            Assert.IsNotNull(workEmail);
+            _mockCompanyRepository.Setup(x => x.GetById(1)).ReturnsAsync((Company?)null);
+            await Assert.ThrowsExceptionAsync<KeyNotFoundException>(
+                async () => await _employeeService.CreateEmployee(_validDtoEmployee)
+            );
         }
 
         [TestMethod()]
@@ -177,38 +202,11 @@ namespace backend_disc.Services.Tests
         {
             _mockUserRepository.Setup(x => x.UsernameExists(It.IsAny<string>())).ReturnsAsync(usernameExist);
             _mockEmployeeRepository.Setup(x => x.PhoneNumExists(It.IsAny<string>())).ReturnsAsync(phoneExist);
-            string fName = "Bob";
-            string lName = "Marley";
             await Assert.ThrowsExceptionAsync<InvalidOperationException>(
-                async () => await _employeeService.GenerateUsernameWorkMailAndPhone(fName, lName)
+                async () => await _employeeService.CreateEmployee(_validDtoEmployee)
             );
         }
-        [TestMethod()]
-        [DataRow(-1)]
-        [DataRow(0)]
-        [DataRow(26)]
-        [DataRow(27)]
-        [DataRow(-122)]
-        public void GetRandomDigits_WithValidLength_ReturnsCorrectLength(int length)
-        {
-            Assert.ThrowsException<ArgumentException>(() => EmployeeService.GetRandomDigits(length));
-        }
 
-        [TestMethod()]
-        [DataRow(1)]
-        [DataRow(2)]
-        [DataRow(12)]
-        [DataRow(24)]
-        [DataRow(25)]
-        public void GetRandomDigits_WithInvalidLength_ReturnsEmptyString(int length)
-        {
-            string result = EmployeeService.GetRandomDigits(length);
-
-            Assert.IsNotNull(result);
-            Assert.IsInstanceOfType(result, typeof(string));
-            Assert.IsTrue(result.All(char.IsDigit));
-            Assert.AreEqual(length, result.Length);
-        }
 
         [TestMethod()]
         [DataRow(null, null)]
