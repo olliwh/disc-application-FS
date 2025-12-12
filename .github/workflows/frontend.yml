@@ -118,7 +118,9 @@ jobs:
 
             - name: Install frontend dependencies
               working-directory: frontend-disc
-              run: npm install
+              run: |
+                  npm install
+                  npm install -D @vitest/coverage-v8
 
             - name: Run frontend tests
               working-directory: frontend-disc
