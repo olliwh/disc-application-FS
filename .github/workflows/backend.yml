@@ -42,14 +42,30 @@ jobs:
                     sleep 2
                   done
 
+            - name: Set up JDK 17
+              uses: actions/setup-java@v4
+              with:
+                  java-version: 17
+                  distribution: "zulu"
+
             - name: Setup .NET
               uses: actions/setup-dotnet@v3
               with:
                   dotnet-version: "8.0.x"
 
+            - name: Install SonarScanner
+              run: dotnet tool install --global dotnet-sonarscanner
+
             - name: Restore dependencies
               working-directory: backend-disc
               run: dotnet restore
+
+            - name: Begin SonarQube Analysis
+              working-directory: backend-disc
+              env:
+                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+              run: |
+                  dotnet sonarscanner begin /k:"olliorganisation_disp-app-backend" /o:"olliorganisation" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
 
             - name: Build API
               working-directory: backend-disc
@@ -86,7 +102,13 @@ jobs:
               env:
                   ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=${{ secrets.DB_NAME }};User Id=sa;Password=${{ secrets.DB_PASSWORD }};TrustServerCertificate=True;"
               working-directory: backend-disc
-              run: dotnet test --configuration Release --logger "trx;LogFileName=test-results.trx" --verbosity normal
+              run: dotnet test --configuration Release --logger "trx;LogFileName=test-results.trx" --verbosity normal --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+            - name: End SonarQube Analysis
+              working-directory: backend-disc
+              env:
+                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+              run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
             - name: Upload .NET test results
               if: always()
