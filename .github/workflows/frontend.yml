@@ -163,10 +163,14 @@ jobs:
             - name: SonarQube Scan
               uses: SonarSource/sonarqube-scan-action@v6
               with:
-                  projectBaseDir: frontend-disc
+                  projectBaseDir: frontend-disc 
+                  args: >
+                      -Dsonar.projectKey=mykey
+                      -Dsonar.organization=olliorganisation
+                      
               env:
                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-                  SONAR_HOST_URL: https://sonarcloud.io
+                  SONAR_HOST_URL: https://sonarcloud.io 
 
             - name: Start frontend dev server
               working-directory: frontend-disc
@@ -195,23 +199,3 @@ jobs:
                   sleep 2
                   netstat -tlnp 2>/dev/null | grep 3000 || ss -tlnp 2>/dev/null | grep 3000 || echo "Checking with lsof..." && lsof -i :3000 || echo "Port check failed"
 
-            - name: Check backend health
-              run: |
-                  echo "=== Testing Backend API ===" 
-                  curl -v http://localhost:5000/api/positions || echo "Positions endpoint failed"
-                  curl -v http://localhost:5000/api/departments || echo "Departments endpoint failed"
-                  curl -v http://localhost:5000/api/employees || echo "Employees endpoint failed"
-
-            - name: Test login endpoints
-              run: |
-                  echo "=== Testing Login Endpoints ==="
-                  echo "Testing alice login..."
-                  curl -v -X POST http://localhost:5000/api/Auth/login \
-                    -H "Content-Type: application/json" \
-                    -d '{"username":"alice","password":"Pass@word1"}'
-
-                  echo ""
-                  echo "Testing admin login..."
-                  curl -v -X POST http://localhost:5000/api/Auth/login \
-                    -H "Content-Type: application/json" \
-                    -d '{"username":"admin","password":"Pass@word1"}'
