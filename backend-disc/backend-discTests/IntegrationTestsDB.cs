@@ -142,7 +142,6 @@ namespace backend_discTests
 
             var result = await _repository.AddEmployeeSPAsync(p);
             Assert.IsNotNull(result);
-            Assert.IsNotNull(result.Id);
             Assert.AreEqual(firstName, result.FirstName);
             Assert.AreEqual(lastName, result.LastName);
             Assert.AreEqual(workEmail, result.WorkEmail);

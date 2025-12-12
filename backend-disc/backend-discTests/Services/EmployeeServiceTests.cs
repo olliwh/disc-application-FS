@@ -148,10 +148,8 @@ namespace backend_disc.Services.Tests
                 string username = at >= 0 ? workEmail.AsSpan(0, at).ToString() : string.Empty;
                 Console.WriteLine(workEmail);
                 Console.WriteLine(username);
-                Assert.IsNotNull(workEmail);
                 Assert.IsTrue(workEmail.Length > 5);
                 Assert.IsTrue(workEmail.Length < 256);
-                Assert.IsNotNull(username);
                 Assert.IsTrue(workEmail.Length > 5);
                 Assert.IsTrue(workEmail.Length < 256);
                 Assert.IsTrue(workEmail.EndsWith("@test.com"));
@@ -172,7 +170,6 @@ namespace backend_disc.Services.Tests
                 Assert.IsNotNull(result);
                 Assert.IsNotNull(result.WorkPhone);
                 string workPhone = result.WorkPhone;
-                Assert.IsNotNull(workPhone);
                 Assert.IsTrue(workPhone.Length > 7); 
                 Assert.IsTrue(workPhone.Length < 26);
             }

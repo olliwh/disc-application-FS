@@ -120,7 +120,7 @@ jobs:
               working-directory: frontend-disc
               run: |
                   npm install
-                  npm install -D @vitest/coverage-v8
+                  npm install -D @vitest/coverage-v8 jsdom
 
             - name: Create vitest config
               working-directory: frontend-disc
