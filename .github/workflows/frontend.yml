@@ -164,16 +164,6 @@ jobs:
               uses: SonarSource/sonarqube-scan-action@v6
               with:
                   projectBaseDir: frontend-disc
-                  args: >
-                      # 1. Force the correct key for the monorepo analysis
-                      -Dsonar.projectKey=olliorganisation_disp-app 
-                      -Dsonar.organization=olliorganisation
-                      
-                      # 2. Fix the 0.0% coverage by pointing to the LCOV report
-                      -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info 
-                      
-                      # 3. Keep verbose flag for diagnosis
-                      -Dsonar.verbose=true
               env:
                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
                   SONAR_HOST_URL: https://sonarcloud.io
@@ -204,4 +194,3 @@ jobs:
               run: |
                   sleep 2
                   netstat -tlnp 2>/dev/null | grep 3000 || ss -tlnp 2>/dev/null | grep 3000 || echo "Checking with lsof..." && lsof -i :3000 || echo "Port check failed"
-
