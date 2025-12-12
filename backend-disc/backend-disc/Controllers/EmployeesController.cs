@@ -37,7 +37,6 @@ namespace backend_disc.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll(
-        [FromQuery] string db = "mssql",
         [FromQuery] int? departmentId = null,
         [FromQuery] int? discProfileId = null,
         [FromQuery] int? positionId = null,
@@ -45,6 +44,9 @@ namespace backend_disc.Controllers
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 12)
             {
+            Console.WriteLine("11111111111111111111111111111111111111111");
+            Console.WriteLine(search);
+            Console.WriteLine(departmentId);
                 var employees = await _employeeService.GetAll(departmentId, discProfileId, positionId, search, pageIndex, pageSize);
                 return Ok(employees);
             }

@@ -139,13 +139,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+//cors
+app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-//cors
-app.UseCors("AllowFrontend");
+
 
 app.MapControllers();
 

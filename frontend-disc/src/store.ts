@@ -38,8 +38,8 @@ const useEmployeeQueryStore = create<EmployeeQueryStore>((set) => ({
       employeeQuery: { ...state.employeeQuery, sortOrder },
     })),
   setSearchText: (searchText) =>
-    set(() => ({
-      employeeQuery: { searchText }, // Reset other filters when search text is set
+    set((state) => ({
+      employeeQuery: { ...state.employeeQuery, searchText },
     })),
 }));
 

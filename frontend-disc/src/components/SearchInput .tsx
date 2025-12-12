@@ -14,7 +14,6 @@ const SearchInput = () => {
   return (
     <form
         onSubmit={(event) => {
-          console.log(ref.current?.value)
         event.preventDefault();
         onSearch(ref.current?.value || "");
       }}
