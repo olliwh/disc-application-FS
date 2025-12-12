@@ -98,7 +98,10 @@ jobs:
                   echo "Seeder completed!"
                   sleep 5
 
-            - name: Run .NET tests and collect coverage
+            - name: Install Coverlet
+              run: dotnet tool install --global coverlet.console
+
+            - name: Run .NET tests
               env:
                   ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=${{ secrets.DB_NAME }};User Id=sa;Password=${{ secrets.DB_PASSWORD }};TrustServerCertificate=True;"
               working-directory: backend-disc
@@ -106,16 +109,26 @@ jobs:
                   dotnet test \
                     --configuration Release \
                     --logger "trx;LogFileName=test-results.trx" \
-                    --verbosity normal \
-                    /p:CollectCoverage=true \
-                    /p:CoverletOutputFormat=opencover \
-                    /p:CoverletOutput=./TestResults/coverage.opencover.xml
+                    --verbosity normal
 
-            - name: List coverage files
+            - name: Run Coverlet to collect coverage
               working-directory: backend-disc
               run: |
-                  echo "Searching for coverage files:"
-                  find . -name "coverage.opencover.xml" -o -name "*.opencover.xml" || echo "No coverage files found"
+                  mkdir -p TestResults
+
+                  # Find the test DLL
+                  TEST_DLL=$(find . -path "*/bin/Release/*/backend-discTests.dll" | head -1)
+                  echo "Test DLL found: $TEST_DLL"
+
+                  # Run coverlet
+                  coverlet "$TEST_DLL" \
+                    --target "dotnet" \
+                    --targetargs "test --no-build --configuration Release" \
+                    --format opencover \
+                    --output "./TestResults/coverage.opencover.xml"
+
+                  echo "Coverage files generated:"
+                  ls -la ./TestResults/
 
             - name: End SonarQube Analysis
               working-directory: backend-disc
