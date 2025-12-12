@@ -122,9 +122,15 @@ jobs:
                   npm install
                   npm install -D @vitest/coverage-v8
 
-            - name: Run frontend tests
+            - name: Run frontend tests with coverage
               working-directory: frontend-disc
-              run: npx vitest run --coverage
+              run: npx vitest run --coverage --reporter=verbose
+
+            - name: List coverage files
+              working-directory: frontend-disc
+              run: |
+                  echo "Coverage directory contents:"
+                  ls -la coverage/ || echo "No coverage directory found"
 
             - name: Build frontend
               working-directory: frontend-disc
