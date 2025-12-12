@@ -5,11 +5,21 @@ on:
         branches:
             - main
             - playwright-tests
-        paths: ["frontend-disc/**", "e2e-tests/**"]
+        paths:
+            [
+                "frontend-disc/**",
+                "e2e-tests/**",
+                ".github/workflows/frontend.yml",
+            ]
     pull_request:
         branches:
             - main
-        paths: ["frontend-disc/**", "e2e-tests/**"]
+        paths:
+            [
+                "frontend-disc/**",
+                "e2e-tests/**",
+                ".github/workflows/frontend.yml",
+            ]
     workflow_dispatch:
 
 jobs:
