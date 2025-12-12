@@ -122,9 +122,30 @@ jobs:
                   npm install
                   npm install -D @vitest/coverage-v8
 
+            - name: Create vitest config
+              working-directory: frontend-disc
+              run: |
+                  cat > vitest.config.coverage.ts << 'EOF'
+                  import { defineConfig } from 'vitest/config'
+                  import react from '@vitejs/plugin-react'
+
+                  export default defineConfig({
+                    plugins: [react()],
+                    test: {
+                      globals: true,
+                      environment: 'jsdom',
+                      coverage: {
+                        provider: 'v8',
+                        reporter: ['text', 'lcov', 'json', 'html'],
+                        reportsDirectory: './coverage',
+                      }
+                    }
+                  })
+                  EOF
+
             - name: Run frontend tests with coverage
               working-directory: frontend-disc
-              run: npx vitest run --coverage --reporter=verbose
+              run: npx vitest run --coverage --reporter=verbose --config vitest.config.coverage.ts
 
             - name: List coverage files
               working-directory: frontend-disc

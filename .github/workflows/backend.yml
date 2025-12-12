@@ -1,156 +1,182 @@
 name: Backend CI/CD
 
 on:
-    push:
-        branches:
-            - main
-        paths: ["backend-disc/**", ".github/workflows/backend.yml"]
-    pull_request:
-        branches:
-            - main
-        paths: ["backend-disc/**", ".github/workflows/backend.yml"]
-    workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "backend-disc/**"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend-disc/**"
+      - ".github/workflows/backend.yml"
+  workflow_dispatch:
 
 jobs:
-    test:
-        runs-on: ubuntu-latest
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
 
+    env:
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      API_SECRET_KEY: ${{ secrets.API_SECRET_KEY }}
+      CONNECTION_STRING: "Server=localhost,1433;Database=${{ secrets.DB_NAME }};User Id=sa;Password=${{ secrets.DB_PASSWORD }};TrustServerCertificate=True;"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start SQL Server
+        run: |
+          docker run \
+            -e ACCEPT_EULA=Y \
+            -e SA_PASSWORD="$DB_PASSWORD" \
+            -p 1433:1433 \
+            --name disc-mssql \
+            -d mcr.microsoft.com/mssql/server:2022-latest
+
+          for i in {1..60}; do
+            if docker logs disc-mssql 2>&1 | grep -q "SQL Server is now ready"; then
+              break
+            fi
+            if [ $i -eq 60 ]; then
+              docker logs disc-mssql
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "zulu"
+
+      - name: Install tools
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+          dotnet tool install --global coverlet.console
+          npm install -g newman
+
+      - name: Restore dependencies
+        working-directory: backend-disc
+        run: dotnet restore
+
+      - name: Begin SonarQube analysis
+        working-directory: backend-disc
         env:
-            DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-            DB_NAME: ${{ secrets.DB_NAME }}
-            API_SECRET_KEY: ${{ secrets.API_SECRET_KEY }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          dotnet sonarscanner begin \
+            /k:"olliorganisation_disp-app-backend" \
+            /o:"olliorganisation" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.token="${SONAR_TOKEN}" \
+            /d:sonar.cs.opencover.reportsPaths="**/TestResults/coverage.opencover.xml"
 
-        steps:
-            - uses: actions/checkout@v4
+      - name: Build
+        working-directory: backend-disc
+        run: dotnet build --configuration Release --no-restore
 
-            - name: Start SQL Server
-              shell: bash
-              run: |
-                  docker run \
-                    -e ACCEPT_EULA=Y \
-                    -e SA_PASSWORD="$DB_PASSWORD" \
-                    -p 1433:1433 \
-                    --name disc-mssql \
-                    -d mcr.microsoft.com/mssql/server:2022-latest
+      - name: Start API
+        working-directory: backend-disc
+        env:
+          ConnectionStrings__DefaultConnection: ${{ env.CONNECTION_STRING }}
+          ASPNETCORE_URLS: http://0.0.0.0:5000
+          ASPNETCORE_ENVIRONMENT: Development
+        run: |
+          dotnet run --project backend-disc/backend-disc.csproj --configuration Release --no-build --urls "http://0.0.0.0:5000" > ../backend.log 2>&1 &
+          echo $! > api.pid
+          echo "API started with PID: $(cat api.pid)"
+          
+          # Wait for API to be ready
+          for i in {1..30}; do
+            if curl -s http://localhost:5000/health > /dev/null 2>&1; then
+              echo "✓ API is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "✗ API failed to start"
+              cat ../backend.log
+              exit 1
+            fi
+            sleep 2
+          done
 
-                  echo "Waiting for SQL Server..."
-                  for i in {1..60}; do
-                    if docker logs disc-mssql 2>&1 | grep -q "SQL Server is now ready"; then
-                      echo "SQL Server ready!"
-                      break
-                    fi
-                    sleep 2
-                  done
+      - name: Run seeder
+        working-directory: backend-disc/seeder
+        env:
+          DB_HOST: localhost
+          DB_PORT: "1433"
+          DB_USER: sa
+        run: |
+          echo "Running database seeder..."
+          dotnet run --configuration Release
+          echo "✓ Seeder completed"
 
-            - name: Set up JDK 17
-              uses: actions/setup-java@v4
-              with:
-                  java-version: 17
-                  distribution: "zulu"
+      - name: Run tests with coverage
+        working-directory: backend-disc
+        env:
+          ConnectionStrings__DefaultConnection: ${{ env.CONNECTION_STRING }}
+        run: |
+          mkdir -p TestResults
+          
+          # Find test DLL
+          TEST_DLL=$(find . -path "*/bin/Release/*/backend-discTests.dll" | head -1)
+          echo "Using test DLL: $TEST_DLL"
+          
+          # Run tests with coverage
+          coverlet "$TEST_DLL" \
+            --target "dotnet" \
+            --targetargs "test --no-build --configuration Release --logger trx;LogFileName=test-results.trx" \
+            --format opencover \
+            --output "./TestResults/coverage.opencover.xml"
 
-            - name: Setup .NET
-              uses: actions/setup-dotnet@v3
-              with:
-                  dotnet-version: "8.0.x"
+      - name: Run Postman tests
+        working-directory: backend-disc
+        run: |
+          newman run Disc-app-api-postman-final-tests.postman_collection.json \
+            --environment postman-env.json \
+            --reporters cli,json \
+            --reporter-json-export test-results.json
 
-            - name: Install SonarScanner
-              run: dotnet tool install --global dotnet-sonarscanner
+      - name: End SonarQube analysis
+        if: always()
+        working-directory: backend-disc
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.token="${SONAR_TOKEN}"
 
-            - name: Restore dependencies
-              working-directory: backend-disc
-              run: dotnet restore
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            **/test-results.trx
+            **/test-results.json
+            backend.log
+          if-no-files-found: warn
 
-            - name: Begin SonarQube Analysis
-              working-directory: backend-disc
-              env:
-                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-              run: |
-                  dotnet sonarscanner begin /k:"olliorganisation_disp-app-backend" /o:"olliorganisation" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/TestResults/coverage.opencover.xml"
+      - name: Stop API
+        if: always()
+        working-directory: backend-disc
+        run: |
+          if [ -f api.pid ]; then
+            kill $(cat api.pid) || true
+          fi
 
-            - name: Build API
-              working-directory: backend-disc
-              run: dotnet build --configuration Release
-
-            - name: Start API
-              env:
-                  ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=${{ secrets.DB_NAME }};User Id=sa;Password=${{ secrets.DB_PASSWORD }};TrustServerCertificate=True;"
-                  API_SECRET_KEY: ${{ secrets.API_SECRET_KEY }}
-                  ASPNETCORE_URLS: http://0.0.0.0:5000
-                  ASPNETCORE_ENVIRONMENT: Development
-              run: |
-                  cd backend-disc
-                  dotnet run --project backend-disc/backend-disc.csproj --configuration Release --urls "http://0.0.0.0:5000" > ../backend.log 2>&1 &
-                  echo $! > api.pid
-                  echo "Backend started with PID: $(cat api.pid)"
-                  sleep 5
-
-            - name: run seeder
-              working-directory: backend-disc/seeder
-              env:
-                  DB_HOST: "localhost"
-                  DB_PORT: "1433"
-                  DB_NAME: ${{ secrets.DB_NAME }}
-                  DB_USER: "sa"
-                  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-              run: |
-                  echo "Running seeder..."
-                  dotnet run --configuration Release
-                  echo "Seeder completed!"
-                  sleep 5
-
-            - name: Install Coverlet
-              run: dotnet tool install --global coverlet.console
-
-            - name: Run .NET tests
-              env:
-                  ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=${{ secrets.DB_NAME }};User Id=sa;Password=${{ secrets.DB_PASSWORD }};TrustServerCertificate=True;"
-              working-directory: backend-disc
-              run: |
-                  dotnet test \
-                    --configuration Release \
-                    --logger "trx;LogFileName=test-results.trx" \
-                    --verbosity normal
-
-            - name: Run Coverlet to collect coverage
-              working-directory: backend-disc
-              run: |
-                  mkdir -p TestResults
-
-                  # Find the test DLL
-                  TEST_DLL=$(find . -path "*/bin/Release/*/backend-discTests.dll" | head -1)
-                  echo "Test DLL found: $TEST_DLL"
-
-                  # Run coverlet
-                  coverlet "$TEST_DLL" \
-                    --target "dotnet" \
-                    --targetargs "test --no-build --configuration Release" \
-                    --format opencover \
-                    --output "./TestResults/coverage.opencover.xml"
-
-                  echo "Coverage files generated:"
-                  ls -la ./TestResults/
-
-            - name: End SonarQube Analysis
-              working-directory: backend-disc
-              env:
-                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-              run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-
-            - name: Upload .NET test results
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: dotnet-test-results
-                  path: "**/test-results.trx"
-                  if-no-files-found: warn
-
-            - name: Install Newman
-              run: npm install -g newman
-
-            - name: Run Postman tests for mssql
-              working-directory: backend-disc
-              run: |
-                  newman run Disc-app-api-postman-final-tests.postman_collection.json \
-                    --environment postman-env.json \
-                    --reporters cli,json \
-                    --reporter-json-export test-results.json
+      - name: Display logs on failure
+        if: failure()
+        run: |
+          echo "=== Backend Logs ==="
+          cat backend.log || echo "No backend logs found"
+          echo "=== Docker Logs ==="
+          docker logs disc-mssql || echo "No docker logs found"
