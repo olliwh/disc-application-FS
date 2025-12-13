@@ -14,6 +14,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseSentry();
 
 // Add logging configuration
 builder.Services.AddLogging(config =>
