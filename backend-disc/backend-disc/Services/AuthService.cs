@@ -16,6 +16,7 @@ namespace backend_disc.Services
         private readonly IConfiguration _config;
         private readonly IGenericRepository<User> _userRepository;
         private readonly ILogger<AuthService> _logger;
+        private readonly SymmetricSecurityKey _signingKey;
 
         public AuthService(
             IConfiguration config,
@@ -25,12 +26,44 @@ namespace backend_disc.Services
             _config = config;
             _userRepository = userRepository;
             _logger = logger;
+            _signingKey = InitializeSigningKey();
+        }
+
+        private SymmetricSecurityKey InitializeSigningKey()
+        {
+            var secretKey = _config["API_SECRET_KEY"]
+                ?? throw new InvalidOperationException("API_SECRET_KEY is not configured");
+
+            var key = Encoding.UTF8.GetBytes(secretKey);
+
+            // Validate key length (minimum 256 bits / 32 bytes for HS256)
+            if (key.Length < 32)
+            {
+                throw new InvalidOperationException(
+                    $"API_SECRET_KEY must be at least 32 characters long for HS256 security. Current length: {key.Length}");
+            }
+
+            // Warn if key is weak (should be 64 bytes minimum for better security)
+            if (key.Length < 64)
+            {
+                _logger.LogWarning(
+                    "API_SECRET_KEY is less than 64 bytes. Consider using a stronger key for production.");
+            }
+
+            return new SymmetricSecurityKey(key);
         }
 
         public async Task<LoginResponseDto?> Login(LoginDto dto)
         {
             try
             {
+                // Validate input
+                if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
+                {
+                    _logger.LogWarning("Login attempt with empty credentials");
+                    return null;
+                }
+
                 var user = await _userRepository.Query()
                     .Include(u => u.Employee)
                     .Include(u => u.UserRole)
@@ -50,36 +83,34 @@ namespace backend_disc.Services
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Password verification failed for user {Username}", dto.Username);
-                    return null; 
+                    return null;
                 }
 
                 if (!isPasswordValid)
                 {
-                    _logger.LogWarning("Login attempt failed: Invalid password - {Username} pa - {Password}", dto.Username, dto.Password);
+                    _logger.LogWarning("Login attempt failed: Invalid password for user {Username}", dto.Username);
                     return null;
                 }
 
-                // Generate JWT
-                var secretKey = _config["API_SECRET_KEY"]
-                    ?? throw new InvalidOperationException("API_SECRET_KEY is not configured");
-
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.UTF8.GetBytes(secretKey);
-
+                // Generate JWT with secure parameters
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(
                     [
+                        new Claim(ClaimTypes.NameIdentifier, user.EmployeeId.ToString()),
                         new Claim(ClaimTypes.Name, user.Username),
-                    new Claim("employeeId", user.EmployeeId.ToString()),
-                    new Claim(ClaimTypes.Role, user.UserRole?.Name ?? "User")
+                        new Claim("employeeId", user.EmployeeId.ToString()),
+                        new Claim(ClaimTypes.Role, user.UserRole?.Name ?? "User")
                     ]),
                     Expires = DateTime.UtcNow.AddMinutes(10),
                     SigningCredentials = new SigningCredentials(
-                        new SymmetricSecurityKey(key),
-                        SecurityAlgorithms.HmacSha256Signature)
+                        _signingKey,
+                        SecurityAlgorithms.HmacSha256Signature),
+                    IssuedAt = DateTime.UtcNow,
+                    NotBefore = DateTime.UtcNow
                 };
 
+                var tokenHandler = new JwtSecurityTokenHandler();
                 var token = tokenHandler.CreateToken(tokenDescriptor);
 
                 return new LoginResponseDto
@@ -90,7 +121,6 @@ namespace backend_disc.Services
             }
             catch (InvalidOperationException)
             {
-                
                 throw;
             }
             catch (Exception ex)
