@@ -40,8 +40,8 @@ const EmployeeGrid = () => {
             </EmployeeCardContainer>
           ))}
 
-        {data?.pages.map((page, index) => (
-          <React.Fragment key={index}>
+        {data?.pages.map((page) => (
+          <React.Fragment key={page.items[0]?.id || Math.random()}>
             {page.items.map((employee) => (
               <EmployeeCardContainer key={employee.id}>
                 <EmployeeCard employee={employee} />

@@ -12,6 +12,7 @@ namespace backend_disc.Repositories
     {
         private readonly DiscProfileDbContext _context;
         private readonly ILogger<EmployeesRepository> _logger;
+        private const string ERROR_MESSAGE = "Error adding employee via stored procedure";
 
         public EmployeesRepository(DiscProfileDbContext context, 
             ILogger<EmployeesRepository> logger)
@@ -105,13 +106,13 @@ namespace backend_disc.Repositories
             }
             catch (ArgumentException ex)
             {
-                _logger.LogError(ex, "Error adding employee via stored procedure");
-                throw new ArgumentException("Error adding employee via stored procedure", ex);
+                _logger.LogError(ex, ERROR_MESSAGE);
+                throw new ArgumentException(ERROR_MESSAGE, ex);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error adding employee via stored procedure");
-                throw new InvalidOperationException("Error adding employee via stored procedure", ex);
+                _logger.LogError(ex, ERROR_MESSAGE);
+                throw new InvalidOperationException(ERROR_MESSAGE, ex);
             }
 
         }

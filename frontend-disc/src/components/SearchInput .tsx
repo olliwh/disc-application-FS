@@ -2,24 +2,25 @@ import { useRef } from "react";
 import { BsSearch } from "react-icons/bs";
 
 import { Input, InputGroup, InputLeftElement } from "@chakra-ui/react";
+
 import useEmployeeQueryStore from "../store";
 
-
-
 const SearchInput = () => {
-  const onSearch = useEmployeeQueryStore((s) => s.setSearchText)
+  const onSearch = useEmployeeQueryStore((s) => s.setSearchText);
 
   const ref = useRef<HTMLInputElement>(null);
 
   return (
     <form
-        onSubmit={(event) => {
+      onSubmit={(event) => {
         event.preventDefault();
         onSearch(ref.current?.value || "");
       }}
     >
       <InputGroup>
-        <InputLeftElement children={<BsSearch />} />
+        <InputLeftElement>
+          <BsSearch />
+        </InputLeftElement>
         <Input
           ref={ref}
           borderRadius={20}
