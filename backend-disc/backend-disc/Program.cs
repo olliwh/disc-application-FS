@@ -6,15 +6,44 @@ using backend_disc.Repositories;
 using backend_disc.Services;
 using class_library_disc.Data;
 using class_library_disc.Models.Sql;
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Sentry.AspNetCore;
 using System.Text;
+
+// Load environment variables from .env file only in local development (not Docker)
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env");
+if (File.Exists(envPath))
+{
+    Console.WriteLine($"Loading .env file from: {envPath}");
+    DotNetEnv.Env.Load(envPath);
+}
+else
+{
+    Console.WriteLine("No .env file found, using environment variables from Docker/system");
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseSentry();
+// Configure Sentry only if DSN is provided
+var sentryDsn = builder.Configuration["Sentry:Dsn"] 
+    ?? Environment.GetEnvironmentVariable("SENTRY_DSN");
+
+if (!string.IsNullOrWhiteSpace(sentryDsn))
+{
+    builder.WebHost.UseSentry(o =>
+    {
+        o.Dsn = sentryDsn;
+        o.Debug = false;
+        o.TracesSampleRate = 1.0;
+        o.Environment = builder.Environment.EnvironmentName;
+        o.AttachStacktrace = false; // Disable enhanced stack traces to avoid debug symbols issues
+        o.StackTraceMode = Sentry.StackTraceMode.Original; // Use simpler stack trace format
+    });
+}
 
 // Add logging configuration
 builder.Services.AddLogging(config =>
@@ -23,7 +52,6 @@ builder.Services.AddLogging(config =>
     config.AddDebug();
     config.SetMinimumLevel(LogLevel.Debug);
 });
-
 
 //Cors
 builder.Services.AddCors(options =>
@@ -49,7 +77,6 @@ builder.Services.AddCors(options =>
                                   .AllowAnyHeader();
                               });
 });
-
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -77,8 +104,8 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddDbContext<DiscProfileDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddAutoMapper(
-    cfg => { }, // optional config lambda 
-    typeof(AutoMapperProfile) // where to find mappers
+    cfg => { },
+    typeof(AutoMapperProfile)
 );
 
 builder.Services.AddScoped<IGenericService<DepartmentDto, CreateDepartmentDto, UpdateDepartmentDto>,
@@ -88,7 +115,6 @@ builder.Services.AddScoped<IGenericService<DiscProfileDto, CreateDiscProfileDto,
 builder.Services.AddScoped<IGenericService<PositionDto, CreatePositionDto, UpdatePositionDto>,
     GenericService<Position, PositionDto, CreatePositionDto, UpdatePositionDto>>();
 
-// Add memory cache for weather service
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient<IWeatherService, WeatherService>();
 
@@ -96,12 +122,19 @@ builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepositor
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IEmployeesRepository, EmployeesRepository>();
 
-
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 var secretKey = builder.Configuration["API_SECRET_KEY"]
     ?? throw new InvalidOperationException("API_SECRET_KEY is not configured");
+
+var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+if (keyBytes.Length < 32)
+{
+    throw new InvalidOperationException(
+        $"API_SECRET_KEY must be at least 32 characters. Current: {keyBytes.Length} bytes");
+}
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 .AddJwtBearer(jwtOptions =>
 {
@@ -109,27 +142,35 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-        ValidateIssuer = false, 
-        ValidateAudience = false, 
-        ValidateLifetime = true, 
-        ClockSkew = TimeSpan.Zero // Removes default 5-minute tolerance
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero,
+        TryAllIssuerSigningKeys = true // Try all available keys instead of requiring kid
     };
+    
+
 });
-
-
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Sentry Middleware - Must be first to catch all exceptions
+if (!string.IsNullOrWhiteSpace(sentryDsn))
+{
+    app.UseSentryTracing();
+}
+
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
+    // Developer exception page should come after Sentry
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-//cors
+
 app.UseCors("AllowFrontend");
 
-// Only use HTTPS redirection in development (Render handles HTTPS at load balancer)
 if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
