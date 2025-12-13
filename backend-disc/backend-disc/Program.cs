@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using MongoDB.Driver;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,7 +33,7 @@ builder.Services.AddCors(options =>
                                   policy
             .WithOrigins(
                 "http://localhost:3000",
-                "https://disc-application-fronttend.onrender.com"
+                "https://disc-application-fs-frontend.onrender.com"
             )
             .AllowAnyMethod()
             .AllowAnyHeader()
@@ -80,15 +79,6 @@ builder.Services.AddAutoMapper(
     cfg => { }, // optional config lambda 
     typeof(AutoMapperProfile) // where to find mappers
 );
-// Neo4j driver registration
-
-builder.Services.AddSingleton<IMongoClient>(sp =>
-{
-    var configuration = sp.GetRequiredService<IConfiguration>();
-    var connString = configuration["MongoDb:ConnectionString"];
-    return new MongoClient(connString);
-});
-
 
 builder.Services.AddScoped<IGenericService<DepartmentDto, CreateDepartmentDto, UpdateDepartmentDto>,
     GenericService<Department, DepartmentDto, CreateDepartmentDto, UpdateDepartmentDto>>();
@@ -137,7 +127,12 @@ if (app.Environment.IsDevelopment())
 }
 //cors
 app.UseCors("AllowFrontend");
-app.UseHttpsRedirection();
+
+// Only use HTTPS redirection in development (Render handles HTTPS at load balancer)
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
