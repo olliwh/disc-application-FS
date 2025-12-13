@@ -156,6 +156,7 @@ namespace backend_disc.Repositories
             int totalCount = await query.CountAsync();
 
             var employees = await query
+                .OrderBy(e => e.Id)  
                 .Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

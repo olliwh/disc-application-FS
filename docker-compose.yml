@@ -1,85 +1,90 @@
 services:
-  mssql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: disc-mssql
-    environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=${DB_PASSWORD}
-    ports:
-      - "1433:1433"
-    volumes:
-      - /var/opt/mssql
-  #   - mssql-data:/var/opt/mssql
+    mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        container_name: disc-mssql
+        environment:
+            - ACCEPT_EULA=Y
+            - SA_PASSWORD=${DB_PASSWORD}
+        ports:
+            - "1433:1433"
+        volumes:
+            - /var/opt/mssql
+        #   - mssql-data:/var/opt/mssql
 
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '${DB_PASSWORD}' -Q 'SELECT 1' -C -b"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '${DB_PASSWORD}' -Q 'SELECT 1' -C -b",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 30s
 
-  backend-disc:
-    container_name: backend-disc
-    build:
-      context: .               
-      dockerfile: backend-disc/backend-disc/Dockerfile.dev
-    env_file:
-      - .env  
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - API_SECRET_KEY=${API_SECRET_KEY}  
-    ports:
-      - "5000:5000"
-    depends_on:
-      mssql:
-        condition: service_healthy
-    volumes:
-      - ./backend-disc:/src
-      - /src/backend-disc/bin
-      - /src/backend-disc/obj
-      - /src/class-library-disc/bin
-      - /src/class-library-disc/obj
-    user: root
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+    backend-disc:
+        container_name: backend-disc
+        build:
+            context: .
+            dockerfile: backend-disc/backend-disc/Dockerfile.dev
+        env_file:
+            - .env
+        environment:
+            - ASPNETCORE_ENVIRONMENT=Development
+            - API_SECRET_KEY=${API_SECRET_KEY}
+            - SENTRY__DSN=${SENTRY__DSN}
+        ports:
+            - "5000:5000"
+        depends_on:
+            mssql:
+                condition: service_healthy
+        volumes:
+            - ./backend-disc:/src
+            - /src/backend-disc/bin
+            - /src/backend-disc/obj
+            - /src/class-library-disc/bin
+            - /src/class-library-disc/obj
+        user: root
+        healthcheck:
+            test:
+                ["CMD", "curl", "-f", "http://localhost:5000/health || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 30s
 
-  frontend-disc:
-    container_name: frontend-disc
-    build:
-      context: ./frontend-disc
-      dockerfile: Dockerfile
-    environment:
-      - VITE_API_URL=http://localhost:5000/api
-      - VITE_HMR_HOST=localhost
-      - VITE_HMR_PORT=3000
-      - CHOKIDAR_USEPOLLING=true
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend-disc:/app
-      - /app/node_modules
-    depends_on:
-      - backend-disc
-  seeder:
-    container_name: disc-seeder
-    build:
-      context: .
-      dockerfile: /backend-disc/seeder/Dockerfile
-    depends_on:
-      mssql:
-        condition: service_healthy
-    env_file:
-      - .env
-    command: sh -c "/app/entrypoint.sh"
-    deploy:
-      replicas: 1    # 0 prevents seeder from starting automatically
+    frontend-disc:
+        container_name: frontend-disc
+        build:
+            context: ./frontend-disc
+            dockerfile: Dockerfile
+        environment:
+            - VITE_API_URL=http://localhost:5000/api
+            - VITE_HMR_HOST=localhost
+            - VITE_HMR_PORT=3000
+            - CHOKIDAR_USEPOLLING=true
+        ports:
+            - "3000:3000"
+        volumes:
+            - ./frontend-disc:/app
+            - /app/node_modules
+        depends_on:
+            - backend-disc
+    seeder:
+        container_name: disc-seeder
+        build:
+            context: .
+            dockerfile: /backend-disc/seeder/Dockerfile
+        depends_on:
+            mssql:
+                condition: service_healthy
+        env_file:
+            - .env
+        command: sh -c "/app/entrypoint.sh"
+        deploy:
+            replicas: 1 # 0 prevents seeder from starting automatically
 # to run with seeder: docker compose up -d --scale seeder=1
 
 # volumes:
 #   mssql-data:
-
 
