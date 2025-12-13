@@ -96,6 +96,9 @@ builder.Services.AddScoped<IGenericService<DiscProfileDto, CreateDiscProfileDto,
     GenericService<DiscProfile, DiscProfileDto, CreateDiscProfileDto, UpdateDiscProfileDto>>();
 builder.Services.AddScoped<IGenericService<PositionDto, CreatePositionDto, UpdatePositionDto>,
     GenericService<Position, PositionDto, CreatePositionDto, UpdatePositionDto>>();
+
+// Add memory cache for weather service
+builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient<IWeatherService, WeatherService>();
 
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));

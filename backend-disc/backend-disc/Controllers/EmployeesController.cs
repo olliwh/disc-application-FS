@@ -32,9 +32,6 @@ namespace backend_disc.Controllers
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 12)
             {
-            Console.WriteLine("11111111111111111111111111111111111111111");
-            Console.WriteLine(search);
-            Console.WriteLine(departmentId);
                 var employees = await _employeeService.GetAll(departmentId, discProfileId, positionId, search, pageIndex, pageSize);
                 return Ok(employees);
             }
