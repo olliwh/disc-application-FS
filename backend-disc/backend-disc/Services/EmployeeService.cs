@@ -5,7 +5,6 @@ using backend_disc.Repositories;
 using backend_disc.Repositories.StoredProcedureParams;
 using class_library_disc.Models.Sql;
 using Isopoh.Cryptography.Argon2;
-using System.Diagnostics;
 using System.Text;
 
 namespace backend_disc.Services
@@ -40,8 +39,6 @@ namespace backend_disc.Services
         /// <exception cref="NotImplementedException"></exception>
         public async Task<EmployeeDto?> CreateEmployee(CreateNewEmployee dto)
         {
-
-
             if (string.IsNullOrWhiteSpace(dto.FirstName) || string.IsNullOrWhiteSpace(dto.LastName))
                 throw new ArgumentException("First name and last name are required");
 
@@ -79,22 +76,14 @@ namespace backend_disc.Services
 
                 return employeeDto;
             }
-            catch (KeyNotFoundException)
-            {
-                throw;
-            }
-            catch (InvalidOperationException)
-            {
-                throw;
-            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error creating employee: {FirstName} {LastName}",
-                    dto.FirstName, dto.LastName);
-                throw new InvalidOperationException("An error occurred while creating the employee", ex);
+                _logger.LogError(ex, "Unexpected critical error creating employee: {FirstName} {LastName}",
+                     dto.FirstName, dto.LastName);
+
+                throw; 
             }
         }
-
 
         private static string GeneratePasswordHash(string password)
         {
@@ -185,9 +174,9 @@ namespace backend_disc.Services
             }
             return stringBuilder.ToString();
         }
+
         public async Task<PaginatedList<ReadEmployee>> GetAll(int? departmentId, int? discProfileId, int? positionId, string? search, int pageIndex, int pageSize)
         {
-
             if (pageIndex < 1)
             {
                 pageIndex = 1;
@@ -218,7 +207,6 @@ namespace backend_disc.Services
                 DiscProfileId = e.DiscProfileId,
             }).ToList();
 
-
             return new PaginatedList<ReadEmployee>(mapped, employees.PageIndex, employees.TotalCount, employees.PageSize);
         }
 
@@ -232,13 +220,10 @@ namespace backend_disc.Services
 
         public async Task<int?> UpdatePrivateDataAsync(int id, UpdatePrivateDataDto updateDto)
         {
-
-
             if (string.IsNullOrWhiteSpace(updateDto.PrivateEmail) || string.IsNullOrWhiteSpace(updateDto.PrivatePhone))
                 throw new ArgumentException("Private email and phone cannot be empty");
 
             return await _employeesRepository.UpdatePrivateData(id, updateDto.PrivateEmail, updateDto.PrivatePhone);
         }
-
     }
 }

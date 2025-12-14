@@ -5,4 +5,4 @@ export interface Department {
   name: string;
 }
 
-export default new ApiClient<Department>("departments")
+export default new ApiClient<Department>("departments");

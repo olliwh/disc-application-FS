@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>backend_disc</RootNamespace>
     <UserSecretsId>3a12d435-6971-419c-9b08-ed153bb08288</UserSecretsId>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,10 @@
     <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Sentry.AspNetCore" Version="5.16.2" />
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.16.1.129956">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
 	  <InternalsVisibleTo Include="backend-discTests" />
   </ItemGroup>
@@ -26,7 +31,5 @@
   <ItemGroup>
     <ProjectReference Include="..\class-library-disc\class-library-disc.csproj" />
   </ItemGroup>
-
-
 
 </Project>

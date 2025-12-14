@@ -5,8 +5,8 @@ import { SimpleGrid, Spinner, Text } from "@chakra-ui/react";
 
 import useEmployees from "../hooks/useEmployees";
 import EmployeeCard from "./EmployeeCard";
+import EmployeeCardContainer from "./EmployeeCardContainer";
 import EmployeeCardSkeleton from "./EmployeeCardSkeleton";
-import EmployeeCardContainer from "./reusableComponents/EmployeeCardContainer";
 
 const EmployeeGrid = () => {
   const { data, error, isLoading, fetchNextPage, hasNextPage } = useEmployees();

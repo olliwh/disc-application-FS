@@ -1,5 +1,4 @@
 ﻿using backend_disc.Dtos.Auth;
-using backend_disc.Dtos.Employees;
 using backend_disc.Repositories;
 using class_library_disc.Models.Sql;
 using Isopoh.Cryptography.Argon2;
@@ -59,7 +58,6 @@ namespace backend_disc.Services
                     return null;
                 }
 
-                // Generate JWT
                 var secretKey = _config["API_SECRET_KEY"]
                     ?? throw new InvalidOperationException("API_SECRET_KEY is not configured");
 

@@ -1,10 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
-import Layout from "./pages/Layout";
+
+import EmployeeProfile from "./pages/EmployeeProfile";
 import ErrorPage from "./pages/ErrorPage";
 import Home from "./pages/Home";
-import EmployeeProfile from "./pages/EmployeeProfile";
-
-
+import Layout from "./pages/Layout";
 
 const router = createBrowserRouter([
   {

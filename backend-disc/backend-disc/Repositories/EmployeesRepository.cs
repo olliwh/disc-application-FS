@@ -4,7 +4,6 @@ using class_library_disc.Data;
 using class_library_disc.Models.Sql;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
 
 namespace backend_disc.Repositories
 {
@@ -20,6 +19,7 @@ namespace backend_disc.Repositories
             _context = context;
             _logger = logger;
         }
+
         /// <summary>
         /// check if employee with that work phone number exists
         /// </summary>
@@ -168,13 +168,14 @@ namespace backend_disc.Repositories
                     .Where(e => (e.FirstName + " " + e.LastName).ToLower().Contains(normalizedSearch))
                     .ToList();
             }
-
             return new PaginatedList<Employee>(employees, pageIndex, totalCount, pageSize);
         }
+
         public async Task<EmployeesOwnProfile?> GetById(int id)
         {
             return await _context.EmployeesOwnProfiles.FirstOrDefaultAsync(e => e.Id == id);
         }
+
         public async Task<int?> Delete(int id)
         {
             var entity = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
@@ -221,6 +222,5 @@ namespace backend_disc.Repositories
                 throw new InvalidOperationException("Failed to update employee data", ex);
             }
         }
-
     }
 }
