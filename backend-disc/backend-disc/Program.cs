@@ -6,12 +6,10 @@ using backend_disc.Repositories;
 using backend_disc.Services;
 using class_library_disc.Data;
 using class_library_disc.Models.Sql;
-using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Sentry.AspNetCore;
 using System.Text;
 
 // Load environment variables from .env file only in local development (not Docker)
@@ -40,12 +38,11 @@ if (!string.IsNullOrWhiteSpace(sentryDsn))
         o.Debug = false;
         o.TracesSampleRate = 1.0;
         o.Environment = builder.Environment.EnvironmentName;
-        o.AttachStacktrace = false; // Disable enhanced stack traces to avoid debug symbols issues
-        o.StackTraceMode = Sentry.StackTraceMode.Original; // Use simpler stack trace format
+        o.AttachStacktrace = false; 
+        o.StackTraceMode = Sentry.StackTraceMode.Original; 
     });
 }
 
-// Add logging configuration
 builder.Services.AddLogging(config =>
 {
     config.AddConsole();
@@ -53,7 +50,6 @@ builder.Services.AddLogging(config =>
     config.SetMinimumLevel(LogLevel.Debug);
 });
 
-//Cors
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: "AllowFrontend",
@@ -146,7 +142,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         ValidateAudience = false,
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero,
-        TryAllIssuerSigningKeys = true // Try all available keys instead of requiring kid
+        TryAllIssuerSigningKeys = true //without this token sekret key is not valid
     };
     
 
@@ -154,16 +150,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
-// Sentry Middleware - Must be first to catch all exceptions
 if (!string.IsNullOrWhiteSpace(sentryDsn))
 {
     app.UseSentryTracing();
 }
 
-// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
-    // Developer exception page should come after Sentry
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();

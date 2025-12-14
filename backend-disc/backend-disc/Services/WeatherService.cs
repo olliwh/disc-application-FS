@@ -22,7 +22,6 @@ namespace backend_disc.Services
             // Create cache key based on rounded coordinates (to 2 decimal places)
             string cacheKey = $"weather_{Math.Round(latitude, 2)}_{Math.Round(longitude, 2)}";
             
-            // Try to get from cache first
             if (_cache.TryGetValue(cacheKey, out CurrentWeatherData? cachedWeather))
             {
                 _logger.LogInformation("Weather data retrieved from cache for coordinates ({Latitude}, {Longitude})", latitude, longitude);
@@ -51,7 +50,6 @@ namespace backend_disc.Services
                 WeatherCode = currentWeatherCode
             };
 
-            // Store in cache
             _cache.Set(cacheKey, currentWeather, CacheDuration);
             _logger.LogInformation("Weather data cached for {Duration} minutes", CacheDuration.TotalMinutes);
             

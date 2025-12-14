@@ -38,7 +38,6 @@ namespace backend_disc.Services.Tests
         private CreateNewEmployee _validDtoEmployee = null!;
         private AddEmployeeSpParams _validSpParamsEmployee = null!;
 
-
         [TestInitialize]
         public void Setup()
         {
@@ -56,16 +55,10 @@ namespace backend_disc.Services.Tests
                 new Employee {Id = 7, WorkEmail = "noah@techcorp.com", WorkPhone = "88887890", FirstName = "Noah", LastName = "Larsen", ImagePath = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png", DepartmentId = 1, DiscProfileId = 1, PositionId = 1},
             };
 
-
             _mockUserRepository.Setup(x => x.UsernameExists(It.IsAny<string>())).ReturnsAsync(false);
             _mockEmployeeRepository.Setup(x => x.PhoneNumExists(It.IsAny<string>())).ReturnsAsync(false);
-
-
-
             var paginatedList = new PaginatedList<Employee>(employees, 1, employees.Count, 10);
             _mockEmployeeRepository.Setup(x => x.GetAll(It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(paginatedList);
-
-
             _employeeService = new EmployeeService(_mockUserRepository.Object, _mockCompanyRepository.Object, _mockMapper.Object, NullLogger<EmployeeService>.Instance, _mockEmployeeRepository.Object);
 
             _validDtoEmployee = new CreateNewEmployee()
@@ -100,10 +93,8 @@ namespace backend_disc.Services.Tests
 
         private void SetupCreateEmployeeMocks()
         {
-            // Setup mapper to map DTO to SP params
             _mockMapper.Setup(x => x.Map<AddEmployeeSpParams?>(It.IsAny<CreateNewEmployee>())).Returns(_validSpParamsEmployee);
             
-            // Setup repository to return a created employee
             var createdEmployee = new Employee
             {
                 Id = 10,
@@ -118,7 +109,6 @@ namespace backend_disc.Services.Tests
             };
             _mockEmployeeRepository.Setup(x => x.AddEmployeeSPAsync(It.IsAny<AddEmployeeSpParams>())).ReturnsAsync(createdEmployee);
             
-            // Setup mapper to map Employee to DTO
             var employeeDto = new EmployeeDto
             {
                 Id = 10,
@@ -132,7 +122,6 @@ namespace backend_disc.Services.Tests
         }
 
         [TestMethod]
-
         public async Task CreateEmployee_GeneratesWorkEmailAndUsername_WithCorrectFormat()
         {
             SetupCreateEmployeeMocks();
@@ -154,12 +143,10 @@ namespace backend_disc.Services.Tests
                 Assert.IsTrue(workEmail.Length < 256);
                 Assert.IsTrue(workEmail.EndsWith("@test.com"));
                 StringAssert.Matches(workEmail, expectedEmailRegex);
-
             }
         }
+
         [TestMethod]
-
-
         public async Task CreateEmployee_GeneratesWorkPhone_WithCorrectFormat()
         {
             SetupCreateEmployeeMocks();
@@ -174,6 +161,7 @@ namespace backend_disc.Services.Tests
                 Assert.IsTrue(workPhone.Length < 26);
             }
         }
+
         [TestMethod()]
         public async Task GetAll_Success()
         {
@@ -283,7 +271,5 @@ namespace backend_disc.Services.Tests
                 async () => await _employeeService.CreateEmployee(_validDtoEmployee)
             );
         }
-
-
     }
 }

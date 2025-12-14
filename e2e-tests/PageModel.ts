@@ -47,8 +47,6 @@ export class PageModel {
     await this.usernameInput.fill(username);
     await this.pswInput.fill(password);
     await this.loginBtnModal.click();
-
-    // Wait for login to complete
   }
 
   async goToProfile() {

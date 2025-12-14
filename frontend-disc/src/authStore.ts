@@ -1,5 +1,4 @@
 import { create } from "zustand";
-
 import loginService from "./services/loginService";
 
 export interface User {

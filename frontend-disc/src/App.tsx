@@ -12,7 +12,7 @@ function App() {
       templateColumns={{ base: "1fr", lg: "200px 1fr" }}
     >
       <GridItem area="nav">
-        <NavBar  />
+        <NavBar />
       </GridItem>
       <Show above="lg">
         <GridItem area="aside">
@@ -22,7 +22,7 @@ function App() {
       </Show>
       <GridItem area="main">
         <DiscProfileSelector />
-        <EmployeeGrid  />
+        <EmployeeGrid />
       </GridItem>
     </Grid>
   );

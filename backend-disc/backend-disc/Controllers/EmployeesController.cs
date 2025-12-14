@@ -1,10 +1,6 @@
 ﻿using backend_disc.Dtos.Employees;
-using backend_disc.Repositories;
 using backend_disc.Services;
-using class_library_disc.Models;
-using Isopoh.Cryptography.Argon2;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend_disc.Controllers
@@ -31,10 +27,10 @@ namespace backend_disc.Controllers
         [FromQuery] string? search = null,
         [FromQuery] int pageIndex = 1,
         [FromQuery] int pageSize = 12)
-            {
-                var employees = await _employeeService.GetAll(departmentId, discProfileId, positionId, search, pageIndex, pageSize);
-                return Ok(employees);
-            }
+        {
+            var employees = await _employeeService.GetAll(departmentId, discProfileId, positionId, search, pageIndex, pageSize);
+            return Ok(employees);
+        }
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -43,7 +39,6 @@ namespace backend_disc.Controllers
         [Authorize]
         public virtual async Task<IActionResult> GetById(int id)
         {
-            // Get employeeId from token
             var employeeIdFromToken = User.FindFirst("employeeId")?.Value;
 
             
@@ -53,7 +48,6 @@ namespace backend_disc.Controllers
                 return Unauthorized(new { message = "Invalid token - missing employeeId claim" });
             }
 
-            // Check if requested ID matches token ID (unless user is Admin)
             if (id != tokenEmployeeId)
             {
                 _logger.LogWarning("User {TokenEmployeeId} attempted to access employee {EmployeeId}", tokenEmployeeId, id);
@@ -129,7 +123,6 @@ namespace backend_disc.Controllers
         [Authorize]
         public virtual async Task<IActionResult> Update(int id, [FromBody] UpdatePrivateDataDto updateDto)
         {
-            // Get employeeId from token
             var employeeIdFromToken = User.FindFirst("employeeId")?.Value;
             if (!int.TryParse(employeeIdFromToken, out var tokenEmployeeId))
             {

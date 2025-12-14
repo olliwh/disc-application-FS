@@ -15,7 +15,8 @@ namespace backend_disc.Services
         private readonly IMapper _mapper;
 
 
-        public GenericService(IGenericRepository<TEntity> repository, IMapper mapper)
+        public GenericService(IGenericRepository<TEntity> repository,
+            IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
@@ -35,7 +36,7 @@ namespace backend_disc.Services
 
             if (pageSize > 50)
             {
-                pageSize = 50; // max page size
+                pageSize = 50;
             }
             var entities = await _repository.GetAll();
             var mapped = _mapper.Map<List<TDto>>(entities);

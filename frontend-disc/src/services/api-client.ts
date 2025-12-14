@@ -1,7 +1,5 @@
 import axios, { type AxiosRequestConfig } from "axios";
 
-import loginService from "./loginService";
-
 export interface Response<T> {
   items: T[];
   totalCount: number;
@@ -18,7 +16,7 @@ const axiosInstance = axios.create({
 
 // Add token to requests
 axiosInstance.interceptors.request.use((config) => {
-  const token = loginService.getToken();
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

@@ -1,10 +1,10 @@
 import { Grid, GridItem, Show } from "@chakra-ui/react";
+
 import DepartmentList from "../components/DepartmentList";
-import PositionList from "../components/PositionList";
 import DiscProfileSelector from "../components/DiscProfileSelector";
 import EmployeeGrid from "../components/EmployeeGrid";
+import PositionList from "../components/PositionList";
 import Weather from "../components/Weather";
-
 
 function App() {
   return (
@@ -21,7 +21,7 @@ function App() {
       </Show>
       <GridItem area="main">
         <DiscProfileSelector />
-        <EmployeeGrid  />
+        <EmployeeGrid />
       </GridItem>
     </Grid>
   );
