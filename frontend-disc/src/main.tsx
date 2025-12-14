@@ -14,7 +14,7 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       staleTime: 1000 * 60 * 5,
       gcTime: 1000 * 60 * 30,
     },
@@ -23,7 +23,6 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    {/* makes the theme available to all chakra components */}
     <ChakraProvider theme={theme}>
       <ColorModeScript initialColorMode={theme["config"].initialColorMode} />
       <QueryClientProvider client={queryClient}>

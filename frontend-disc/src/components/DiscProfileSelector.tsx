@@ -1,4 +1,11 @@
-import { Button, Menu, MenuButton, MenuItem, MenuList } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+} from "@chakra-ui/react";
 
 import useDiscProfiles from "../hooks/useDiscProfiles";
 import useEmployeeQueryStore from "../store";
@@ -12,28 +19,30 @@ const DiscProfileSelector = () => {
   if (error) return null;
 
   return (
-    <Menu>
-      <MenuButton as={Button}>
-        {selectedDiscProfile ? selectedDiscProfile.name : "DiscProfiles"}
-      </MenuButton>
-      <MenuList>
-        <MenuItem
-          hidden={!selectedDiscProfile}
-          color="red"
-          onClick={() => setDiscProfile(undefined)}
-        >
-          Clear
-        </MenuItem>
-        {data?.items.map((discProfile) => (
+    <Box paddingLeft="10" paddingTop={8}>
+      <Menu>
+        <MenuButton as={Button}>
+          {selectedDiscProfile ? selectedDiscProfile.name : "DiscProfiles"}
+        </MenuButton>
+        <MenuList>
           <MenuItem
-            key={discProfile.id}
-            onClick={() => setDiscProfile(discProfile)}
+            hidden={!selectedDiscProfile}
+            color="red"
+            onClick={() => setDiscProfile(undefined)}
           >
-            {discProfile.name}
+            Clear
           </MenuItem>
-        ))}
-      </MenuList>
-    </Menu>
+          {data?.items.map((discProfile) => (
+            <MenuItem
+              key={discProfile.id}
+              onClick={() => setDiscProfile(discProfile)}
+            >
+              {discProfile.name}
+            </MenuItem>
+          ))}
+        </MenuList>
+      </Menu>
+    </Box>
   );
 };
 export default DiscProfileSelector;
