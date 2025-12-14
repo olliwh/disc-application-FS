@@ -25,6 +25,7 @@ namespace seeder
                 string sqlCreateStoredProcEdit = await ReadSqlFile("createStoredProcEdit.sql");
                 string sqlCreateView = await ReadSqlFile("createView.sql");
                 string sqlInsertData = await ReadSqlFile("insertDataQuery.sql");
+                string sqlCreateIndex = await ReadSqlFile("createIndex.sql");
 
                 await WaitForTable(connectionString, "dbo.stress_measures");
                 await WaitForTable(connectionString, "dbo.employees");
@@ -38,6 +39,7 @@ namespace seeder
                     await ExecuteNonQuery(connectionString, sqlCreateStoredProcEdit);
                     await ExecuteNonQuery(connectionString, sqlCreateView);
                     await ExecuteNonQuery(connectionString, sqlInsertData);
+                    await ExecuteNonQuery(connectionString, sqlCreateIndex);
                     Console.WriteLine("Seeder completed successfully!");
                 }
             }
