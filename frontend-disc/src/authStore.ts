@@ -1,4 +1,5 @@
 import { create } from "zustand";
+
 import loginService from "./services/loginService";
 
 export interface User {
@@ -20,7 +21,16 @@ interface AuthStore {
 const getInitialToken = () => loginService.getToken() || "";
 const getInitialUser = () => {
   const userStr = localStorage.getItem("user");
-  return userStr ? JSON.parse(userStr) : ({} as User);
+  if (!userStr) return {} as User;
+
+  try {
+    return JSON.parse(userStr);
+  } catch (error) {
+    console.error("Failed to parse user from localStorage:", error);
+    // Clear corrupted data
+    localStorage.removeItem("user");
+    return {} as User;
+  }
 };
 
 const useAuthStore = create<AuthStore>((set) => ({

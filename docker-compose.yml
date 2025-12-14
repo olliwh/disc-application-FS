@@ -10,6 +10,8 @@ services:
         volumes:
             - /var/opt/mssql
         #   - mssql-data:/var/opt/mssql
+        networks:
+            - backend
 
         healthcheck:
             test:
@@ -44,6 +46,9 @@ services:
             - /src/backend-disc/obj
             - /src/class-library-disc/bin
             - /src/class-library-disc/obj
+        networks:
+            - backend
+            - frontend
         user: root
         healthcheck:
             test:
@@ -60,6 +65,7 @@ services:
             dockerfile: Dockerfile
         environment:
             - VITE_API_URL=http://localhost:5000/api
+            - VITE_SENTRY_DSN=${VITE_SENTRY_DSN}
             - VITE_HMR_HOST=localhost
             - VITE_HMR_PORT=3000
             - CHOKIDAR_USEPOLLING=true
@@ -68,6 +74,8 @@ services:
         volumes:
             - ./frontend-disc:/app
             - /app/node_modules
+        networks:
+            - frontend
         depends_on:
             - backend-disc
     seeder:
@@ -81,10 +89,15 @@ services:
         env_file:
             - .env
         command: sh -c "/app/entrypoint.sh"
+        networks:
+            - backend
         deploy:
             replicas: 1 # 0 prevents seeder from starting automatically
 # to run with seeder: docker compose up -d --scale seeder=1
 
+networks:
+    backend:
+    frontend:
 # volumes:
 #   mssql-data:
 
