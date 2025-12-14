@@ -58,7 +58,7 @@ builder.Services.AddCors(options =>
                                   policy
             .WithOrigins(
                 "http://localhost:3000",
-                "https://disc-app-frontend.onrender.com/"
+                "https://disc-app-frontend.onrender.com"
             )
             .AllowAnyMethod()
             .AllowAnyHeader()
