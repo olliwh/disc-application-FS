@@ -69,7 +69,7 @@ namespace backend_disc.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]//not admin role
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]//in valid token
         //NullReferenceException if fk doesnt exist
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateEmployee([FromBody] CreateNewEmployee dto)
         {
             try
@@ -107,6 +107,7 @@ namespace backend_disc.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [Authorize(Roles = "Admin")]
         public virtual async Task<IActionResult> Delete(int id)
         {
             var deleted = await _employeeService.DeleteAsync(id);

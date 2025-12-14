@@ -1,5 +1,6 @@
 ﻿using backend_disc.Dtos.Auth;
 using backend_disc.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,5 +29,16 @@ namespace backend_disc.Controllers
             }
             return Ok(result);
         }
+
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpPost("error")]
+        [Authorize(Roles = "Admin")]
+
+        public async Task<IActionResult> Error([FromBody] LoginDto dto)
+        {
+            throw new Exception("This is a test exception for global error handling.");
+        }
+    
     }
 }
