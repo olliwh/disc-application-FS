@@ -79,6 +79,7 @@ jobs:
             /o:"olliorganisation" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.token="${SONAR_TOKEN}" \
+            /d:sonar.branch.name="${{ github.ref_name }}" \
             /d:sonar.test.inclusions=tests/*.json \
             /d:sonar.cs.opencover.reportsPaths="**/TestResults/coverage.opencover.xml"
 
