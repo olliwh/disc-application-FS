@@ -39,6 +39,15 @@ namespace backend_disc.Controllers
         {
             throw new Exception("This is a test exception for global error handling. need smal code change for sonar");
         }
+                [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [HttpPost("error2")]
+        [Authorize(Roles = "Admin")]
+
+        public async Task<IActionResult> Error2([FromBody] LoginDto dto)
+        {
+            throw new Exception("This is a test exception for global error handling");
+        }
     
     }
 }
