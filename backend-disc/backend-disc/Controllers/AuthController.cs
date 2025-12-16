@@ -37,7 +37,7 @@ namespace backend_disc.Controllers
 
         public async Task<IActionResult> Error([FromBody] LoginDto dto)
         {
-            throw new Exception("This is a test exception for global error handling.");
+            throw new Exception("This is a test exception for global error handling. need smal code change for sonar");
         }
     
     }
